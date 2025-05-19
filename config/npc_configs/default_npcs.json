@@ -1,39 +1,16 @@
 {
-    "default_npc": {
-        "basic_info": {
-            "name": "默认NPC",
-            "age": 25,
-            "gender": "未指定",
-            "occupation": "未指定",
-            "personality_traits": ["友好", "平和"]
-        },
-        "permanent_memory": {
-            "core_beliefs": [
-                "我应该对他人保持友善",
-                "帮助他人是件好事"
-            ],
-            "life_experiences": [],
-            "relationships": {}
-        },
-        "initial_state": {
-            "emotion": {
-                "pleasure": 0.5,
-                "arousal": 0.3,
-                "dominance": 0.5
-            },
-            "physical_state": {
-                "energy": 1.0,
-                "health": 1.0
+    "merchant": {
+        "identity": {
+            "name": "老王",
+            "race": "人类",
+            "faction": "商人协会",
+            "personality": {
+                "友善": 0.8,
+                "精明": 0.9,
+                "谨慎": 0.7,
+                "幽默": 0.6
             }
         },
-        "interaction_preferences": {
-            "conversation_style": "正常",
-            "response_length": "medium",
-            "politeness_level": 0.7
-        },
-        "knowledge_base": {
-            "general_knowledge": true,
-            "specific_domains": []
-        }
+        "initial_goal": "做好生意，积累财富"
     }
 } 

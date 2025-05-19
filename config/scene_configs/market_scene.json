@@ -1,0 +1,16 @@
+{
+    "social_relations": [
+        {
+            "target_id": "player",
+            "relationship_type": "商业关系",
+            "trust_level": 0.6,
+            "familiarity": 0.4
+        },
+        {
+            "target_id": "guard_captain",
+            "relationship_type": "熟人",
+            "trust_level": 0.7,
+            "familiarity": 0.5
+        }
+    ]
+} 

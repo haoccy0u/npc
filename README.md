@@ -1,42 +1,109 @@
 # NPC 智能交互系统
 
-[前面的系统架构部分保持不变...]
+## 系统概述
+这是一个基于智能交互的 NPC（非玩家角色）系统，通过模块化设计实现了复杂的 NPC 行为模拟和交互响应。系统能够让 NPC 具备情感状态、社交关系以及动态的行为决策能力。
 
-## 简化文件结构
+## 系统架构
+
+### NPCBase（NPC 实例对象）
+核心类，负责管理单个 NPC 的所有状态和行为。
+
+#### 内部状态 (Internal State)
+```
+├── #region Internal State（私有状态变量）
+│   ├──  _identityInfo              // 永久性设定（姓名、种族、派系、性格等）
+│   ├──  _socialGraph               // 社会关系图谱（来自场景设定）
+│   ├──  _memoryStore               // 互动生成的记忆记录（语言、行为、信任变动等）
+│   ├──  _goalState                 // 当前动因、长期目标（可静态设定或动态推导）
+│   ├──  _emotionalState            // 情绪状态（恐惧、信任、愤怒等）
+│   ├──  _currentIntent             // 当前行为意图缓存（由 IntentService 提供）
+│   ├──  _currentOutPut             // 当前输出（由 OutputService 提供）
+│   └──  _channelAdapter            // 当前交互通道策略器（面对面/短信/论坛）
+```
+
+#### 初始化方法 (Initialization)
+```
+├── #region Initialization
+│   ├──  initializeFromSources(npcFile, sceneFile)
+│       → 从 NPC 数据文件加载 identity 与初始状态
+│       → 从场景文件加载关系图谱与局部动态
+│       → 可拓展支持互动中派生状态补充（如首次相遇记录）
+│       → 当前预留结构，加载机制与顺序待设计完善
+```
+
+#### 通道适配器 (Channel Adapter)
+```
+├── #region Channel Adapter
+│   ├──  setChannel(type)               // 设置当前交互通道类型（三种分别是面对面，短信和网络论坛）
+这部分暂时不用实现具体功能，仅占位
+
+```
+
+#### 行为接口 (Behavior Interface)
+```
+├── #region Behavior Interface
+│   ├──  toSnapshot()                   // 打包当前状态为 npcSnapshot（供服务使用）
+│   ├──  evaluateIntent(context)        // 通过 IntentService 生成并缓存行为意图
+│   ├──  generateResponse()             // 通过 OutputService 基于意图生成语言/行为
+│   ├──  updateMemory(event)            // 将行为结果写入记忆，影响后续状态
+│   ├──  getStatus()                    // 获取当前状态摘要（供系统/玩家观察）
+│   └──  debugTrace()                   // 输出完整状态与行为路径（开发调试）
+```
+
+### IntentService（行为意图服务）
+负责生成 NPC 的行为意图。
+
+```
+IntentService（行为意图服务模块）
+├──  evaluate(npcSnapshot, context)
+│     → 调用llm返回意图对象（返回一段包涵npc意图的文本（描述性质的）涵盖意图的要素如 type: "deflect", emotion: "tense", target: "player"）
+├──  injectBehaviorRules(profile)
+│     → 加载不同行为模型（如谨慎型、攻击型等）
+├──  batchEvaluate(npcSnapshots[])
+│     → 支持多个 NPC 的并发意图计算
+```
+
+### OutputService（输出生成服务）
+负责将意图转化为具体的输出响应。
+
+```
+OutputService（输出生成服务模块）
+├──  generateDialogue(intent, npcSnapshot，_channelAdapter)
+│     → 基于意图与通道调用llm生成语言响应（文本 + 标签）
+├──  executeAction(intent, npcSnapshot)
+│     → 输出非语言行为（行动、通报、退出等）
+├──  applyExpressionStyle(intent, emotion)
+│     → 决定语言风格（如挑衅、模糊、激动）
+├──  batchRespond(intentList, npcSnapshots)
+│     → 并发输出优化（提升响应效率）
+```
+
+## 文件结构
 
 ```
 npc/
+├── core/
+│   ├── npc_base.py           # NPCBase 核心实现
+│   ├── intent_service.py     # 意图服务实现
+│   └── output_service.py     # 输出服务实现
 ├── config/
-│   ├── npc_configs/           # NPC预制配置文件
-│   │   └── default_npcs.json  # 默认NPC配置
-│   └── strategy_configs/      # 策略配置文件
-│       └── expression_strategies.json  # 表达策略配置
-├── memory/
-│   └── memory_base.py        # 基础记忆系统（使用预制配置）
-├── intent_module.py          # 整合的意图处理模块
-├── output_module.py          # 整合的输出处理模块
-├── strategy.py              # 可配置的策略系统
-├── npc.py                   # NPC主类实现
+│   ├── npc_configs/         # NPC 配置文件
+│   └── channel_configs/     # 通道配置文件
 └── README.md
-
 ```
 
-## 实现优先级
+## 使用流程
 
-### 1. 配置系统
-- 设计 NPC 配置格式（包含永久记忆、初始关系等）
-- 设计表达策略配置格式（定义不同类型的表达方式）
+1. 创建 NPC 配置文件
+2. 初始化 NPCBase 实例
+3. 设置适当的通道适配器
+4. 通过行为接口进行交互
+5. 监控和调试 NPC 状态
 
-### 2. 核心模块实现
+## 后续开发计划
 
-
-3. **intent_module.py**
-   - 整合情境感知、状态评估、目标动因和意图判断
-   - 基于当前状态生成行为意图，注意，这一步需要调用llm来生成
-   - 提供统一的意图生成接口
-
-4. **output_module.py**
-   - 整合语言生成和行为决策
-   - 根据策略配置生成响应
-   - 提供统一的输出生成接口
-
+1. 完善情感引擎系统
+2. 实现记忆系统接口
+3. 优化多 NPC 并发处理
+4. 添加更多行为模型支持
+5. 改进调试和监控工具
