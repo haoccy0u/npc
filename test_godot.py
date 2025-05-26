@@ -3,6 +3,7 @@ import os
 from core.llm_service import LLMService
 from core.websocket_server import WebSocketServer
 import json
+import time
 
 # 测试用的寒暄消息
 TEST_GREETING = {
@@ -32,6 +33,8 @@ class DialogueService:
         self.llm_service = llm_service
         self.dialogue_chain = llm_service.create_chain(DIALOGUE_TEMPLATE)
         self.has_greeted = False
+        self.message_count = 0
+        self.start_time = time.time()
     
     async def handle_connection(self, websocket) -> None:
         """处理新的连接，发送寒暄消息"""
@@ -43,6 +46,10 @@ class DialogueService:
         # 实际发送寒暄消息
         greeting_json = json.dumps(TEST_GREETING)
         await websocket.send(greeting_json)
+    
+    async def handle_message_received(self, message: str, websocket) -> None:
+        """处理接收到的消息"""
+        print(f"\n收到消息: {message}\n")
     
     async def handle_dialogue(self, message: str) -> dict:
         """处理对话消息并返回响应"""
@@ -75,7 +82,7 @@ class DialogueService:
 async def main():
     try:
         # 初始化LLM服务
-        api_key = ""
+        api_key = "sk-SdjbKZ455Psww0ZoKvSl4as8dKai9i3CUQWikdz4w2QBA4Vq"
         if not api_key:
             print("错误: 未设置OPENAI_API_KEY环境变量")
             return
@@ -97,6 +104,8 @@ async def main():
         server._handle_dialogue = dialogue_service.handle_dialogue
         # 添加连接处理方法
         server.on_client_connected = dialogue_service.handle_connection
+        # 添加消息接收处理方法
+        server.on_message_received = dialogue_service.handle_message_received
         
         print("\n=== AI对话服务已启动 ===")
         print("WebSocket服务器运行在 ws://localhost:8080")
